@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "Ranger",
+    "slug": "ranger",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "ranger",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "android": {
+      "package": "com.ranger.maangprep",
+      "adaptiveIcon": {
+        "backgroundColor": "#000000"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-asset",
+      "@react-native-community/datetimepicker"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

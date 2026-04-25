@@ -58,6 +58,17 @@ export async function getPageContent() {
 }
 ```
 
-## 4. Verify
+## 4. Update `list_tools` in `lib/agent.ts`
+
+Add a one-line entry in the `list_tools` case so it stays accurate:
+```typescript
+{ name: 'your_tool_name', description: 'One-line description.' },
+```
+
+## 5. Verify
 
 Run `npx tsc --noEmit` after all changes to confirm no type errors.
+
+---
+
+**Note:** Not all tools need Notion. `get_roadmap` and `list_tools` are pure in-memory tools with no Notion calls — skip step 3 for tools that don't touch the database.

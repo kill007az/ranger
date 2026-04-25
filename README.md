@@ -12,6 +12,7 @@ A standalone Android app (Expo SDK 52) that acts as a conversational agent for a
 | Language | TypeScript (strict) |
 | LLM | Google Gemini (`@google/generative-ai`) via free tier |
 | Notion integration | Notion REST API v1 via `fetch` (no SDK — RN incompatible) |
+| Web CORS proxy | `express` + `cors` dev server (`proxy.js`) — required for Expo web |
 | Date picker | `@react-native-community/datetimepicker` |
 | Secure storage | `expo-secure-store` (Android Keystore backed) |
 | Build | EAS Build (cloud APK, free tier) |
@@ -44,6 +45,8 @@ ranger/
 │       ├── add-tool.md      # /add-tool  — scaffold a new agent tool
 │       ├── update-notion.md # /update-notion — edit Notion via MCP
 │       └── build-apk.md     # /build-apk — EAS build walkthrough
+├── proxy.js                 # Express CORS proxy for Expo web (forwards /notion/* → Notion API)
+├── .mcp.json                # Notion MCP server config for Claude Code (gitignored — contains API key)
 ├── .env                     # Gemini API key + model (EXPO_PUBLIC_ prefix required)
 ├── app.json                 # Expo config (package name, plugins)
 ├── eas.json                 # EAS build profiles (preview = APK, production = AAB)
@@ -94,19 +97,24 @@ EXPO_PUBLIC_GEMINI_MODEL=gemini-3.1-flash-lite-preview
 
 ## Running (Development)
 
+### Android / Expo Go
 ```bash
 conda activate ranger
 cd "e:/Personal Projects/ranger"
 npx expo start
 ```
+Scan the QR code with Expo Go. On first launch the Setup screen appears — enter your Notion token, prep start date, and optionally a Gemini key.
 
-1. A QR code appears in the terminal
-2. Open **Expo Go** on your phone
-3. Scan the QR code
-4. On first launch, the **Setup screen** appears — enter:
-   - Your Notion `secret_...` token
-   - Your prep start date (via date picker) — used to calculate current week + lock logging before start date
-   - Gemini key field is optional (reads from `.env` if not set)
+### Web (browser)
+Notion's API blocks direct browser requests (CORS). Run the proxy first in a separate terminal:
+```bash
+# Terminal 1 — CORS proxy (required for web)
+node proxy.js
+
+# Terminal 2 — Expo
+npx expo start --web
+```
+The proxy runs on `http://localhost:3001` and forwards all `/notion/*` requests server-side. The app detects `Platform.OS === 'web'` and routes Notion calls through it automatically.
 
 ---
 
@@ -170,8 +178,10 @@ chat.sendMessage(userMessage)
 │  ├── update_daily_log → updateDailyLogEntryByDate() → Notion PATCH /pages
 │  ├── get_today_log    → getEntryByDate() → Notion POST /databases/{id}/query
 │  ├── get_week_number  → getCurrentWeek(startDate)
-│  ├── get_weekly_stats → queryWeekEntries(week) → Notion POST /databases/{id}/query
-│  └── get_streak       → queryRecentEntries(60) → Notion query + streak calc
+│  ├── get_weekly_stats → queryWeekEntries(week) → Notion POST /databases/{id}/query (+ daily_notes)
+│  ├── get_streak       → queryRecentEntries(60) → Notion query + streak calc
+│  ├── get_roadmap      → static 24-week map (sourced from Notion page, compiled in agent.ts)
+│  └── list_tools       → returns tool registry inline
 │     │
 │     ▼
 └── chat.sendMessage(functionResponses) ──→ loop
@@ -235,8 +245,10 @@ Defined in [`constants/tools.ts`](constants/tools.ts), executed in [`lib/agent.t
 | `update_daily_log` | Partial update to an existing entry for a given date. Only provided fields are modified. | `date: YYYY-MM-DD` (required), any of the above |
 | `get_today_log` | Fetch the existing log entry for a date (defaults to today). Returns null if none exists. | `date?: YYYY-MM-DD` |
 | `get_week_number` | Get the current week (1–24) based on stored start date. | none |
-| `get_weekly_stats` | Get adherence statistics for a week: days logged, DSA count, mocks, average score, etc. | `week?: number` (defaults to current) |
+| `get_weekly_stats` | Get adherence stats + per-day notes for a week: days logged, DSA count, mocks, average score, daily_notes array. | `week?: number` (defaults to current) |
 | `get_streak` | Calculate current streak. Rule: ≥1 DSA problem per day (Sundays skipped, rest exempt). | none |
+| `get_roadmap` | Fetch topic, problem types, and weekly goal from the 24-week plan. | `week?: number` (omit for full roadmap) |
+| `list_tools` | List all available agent tools with descriptions. | none |
 
 ### Adding a New Tool
 Use the `/add-tool` Claude Code skill — it guides all three required file changes.
@@ -298,6 +310,24 @@ Project-level slash commands in [`.claude/commands/`](.claude/commands/):
 | `/add-tool` | Scaffold a new Gemini agent tool across all three required files (tools.ts, agent.ts, notion.ts) |
 | `/update-notion` | Update the Notion dashboard directly via MCP (includes all key page/DB IDs) |
 | `/build-apk` | Step-by-step EAS APK build and installation guide |
+| `/manage-daily-log` | Update Daily Log database schema or data via Notion MCP |
+| `/test-logging` | Test the daily logging flow end-to-end |
+
+### Notion MCP (Claude Code only)
+`.mcp.json` configures the `@notionhq/notion-mcp-server` for Claude Code sessions, giving Claude direct read/write access to your Notion workspace. This file is gitignored (contains your API key). To recreate it:
+```json
+{
+  "mcpServers": {
+    "notion": {
+      "command": "npx",
+      "args": ["-y", "@notionhq/notion-mcp-server"],
+      "env": {
+        "OPENAPI_MCP_HEADERS": "{\"Authorization\": \"Bearer YOUR_NOTION_KEY\", \"Notion-Version\": \"2022-06-28\"}"
+      }
+    }
+  }
+}
+```
 
 ---
 

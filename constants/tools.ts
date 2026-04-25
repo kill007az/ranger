@@ -75,7 +75,7 @@ export const AGENT_TOOLS: Tool[] = [
       },
       {
         name: 'get_weekly_stats',
-        description: 'Get adherence statistics for a specific week: days logged, DSA problem count, mocks, average score.',
+        description: 'Get adherence statistics AND per-day notes for a specific week. Use this when the user asks about last week, a specific week, weekly progress, what problems they worked on, or any week-level summary.',
         parameters: {
           type: 'object' as any,
           properties: {
@@ -90,6 +90,24 @@ export const AGENT_TOOLS: Tool[] = [
         name: 'get_streak',
         description:
           "Calculate the user's current streak. Streak rule from the plan's Fallback System: a day counts if DSA ≥ 1 problem was solved, ignoring Sundays (Sunday is an official rest day — does not break the streak).",
+        parameters: {
+          type: 'object' as any,
+          properties: {},
+        },
+      },
+      {
+        name: 'get_roadmap',
+        description: 'Fetch the 24-week MAANG prep roadmap. Returns topic, problem types, and weekly goal. Pass a week number to get a specific week, or omit to get all 24 weeks.',
+        parameters: {
+          type: 'object' as any,
+          properties: {
+            week: { type: 'number' as any, description: 'Week number (1–24). Omit to get the full roadmap.' },
+          },
+        },
+      },
+      {
+        name: 'list_tools',
+        description: 'List all tools available to the agent with a short description of each.',
         parameters: {
           type: 'object' as any,
           properties: {},

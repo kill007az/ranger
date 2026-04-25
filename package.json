@@ -8,6 +8,7 @@
     "build:apk": "eas build --platform android --profile preview"
   },
   "dependencies": {
+    "@expo/metro-runtime": "~4.0.1",
     "@google/generative-ai": "^0.21.0",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-native-community/datetimepicker": "8.2.0",
@@ -19,13 +20,17 @@
     "expo-splash-screen": "~0.29.22",
     "expo-status-bar": "~2.0.1",
     "react": "18.3.1",
+    "react-dom": "18.3.1",
     "react-native": "0.76.9",
-    "react-native-screens": "~4.4.0"
+    "react-native-screens": "~4.4.0",
+    "react-native-web": "~0.19.13"
   },
   "devDependencies": {
     "@babel/core": "^7.25.0",
     "@types/react": "~18.3.12",
+    "cors": "^2.8.6",
     "eas-cli": "^8.0.0",
+    "express": "^5.2.1",
     "typescript": "^5.3.3"
   }
 }

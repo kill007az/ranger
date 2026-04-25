@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "mcp__notion__notion-create-pages"
+      "mcp__notion__notion-create-pages",
+      "mcp__notion__notion-fetch",
+      "mcp__notion__API-post-search"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "notion"
+  ],
+  "enableAllProjectMcpServers": true
 }

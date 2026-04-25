@@ -1,6 +1,7 @@
+import { Platform } from 'react-native';
 import { getNotionKey } from './storage';
 
-const BASE = 'https://api.notion.com/v1';
+const BASE = Platform.OS === 'web' ? 'http://localhost:3001/notion' : 'https://api.notion.com/v1';
 const VERSION = '2022-06-28';
 
 export const DAILY_LOG_DB_ID = '28842f0050534b4a8925edad850dd4b5';
@@ -8,6 +9,7 @@ export const DAILY_LOG_DB_ID = '28842f0050534b4a8925edad850dd4b5';
 async function req(path: string, method: string, body?: object): Promise<any> {
   const key = await getNotionKey();
   if (!key) throw new Error('Notion API key not configured');
+  console.log(`[Notion] ${method} ${path}`, body ? JSON.stringify(body).slice(0, 200) : '');
   const res = await fetch(`${BASE}${path}`, {
     method,
     headers: {
@@ -19,9 +21,12 @@ async function req(path: string, method: string, body?: object): Promise<any> {
   });
   if (!res.ok) {
     const err = await res.text();
+    console.error(`[Notion] ${res.status} error on ${method} ${path}:`, err);
     throw new Error(`Notion API error ${res.status}: ${err}`);
   }
-  return res.json();
+  const data = await res.json();
+  console.log(`[Notion] ${res.status} OK — ${data.results?.length ?? 'no'} results`);
+  return data;
 }
 
 export interface DailyLogEntry {
